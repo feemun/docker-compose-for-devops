@@ -1,0 +1,30 @@
+networks:
+  elastic:
+    driver: bridge
+
+services:
+  elasticsearch:
+    image: 'elasticsearch:8.15.1'
+    container_name: es01
+    networks:
+      - elastic
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"  # 调整内存大小，根据需求修改
+        #    volumes:
+      #      - /home/catfish/docker/docker-data/elasticsearch/data:/usr/share/elasticsearch/data  # 映射数据目录
+      #      - /home/catfish/docker/docker-data/elasticsearch/logs:/usr/share/elasticsearch/logs  # 映射日志目录
+
+  kibana-1:
+    image: 'kibana:8.15.1'
+    container_name: kib01
+    networks:
+      - elastic
+    ports:
+      - "5601:5601"
+        #    environment:
+        #      SERVER_NAME: kibana.example.org
+        #      ELASTICSEARCH_HOSTS: '["http://es01:9200"]' # es01为es实例的container_name
