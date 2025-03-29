@@ -2,46 +2,29 @@ services:
   mysql:
     image: mysql:8.0
     container_name: mysql_dev
-    # 容器重启策略：除非手动停止，否则总是重启
     restart: unless-stopped
     environment:
-      # MySQL root 用户密码
       MYSQL_ROOT_PASSWORD: root123
-      # 创建默认数据库
       MYSQL_DATABASE: dev_db
-      # 创建普通用户
       MYSQL_USER: dev_user
-      # 设置普通用户密码
       MYSQL_PASSWORD: dev123
     ports:
       - "3306:3306"
     volumes:
-      # 数据文件持久化
       - ./data:/var/lib/mysql
-      # MySQL 配置文件目录
       - ./conf:/etc/mysql/conf.d
-      # MySQL 日志文件目录
       - ./logs:/var/log/mysql
-    # MySQL 服务启动参数
     command: --default-authentication-plugin=mysql_native_password
              --character-set-server=utf8mb4
              --collation-server=utf8mb4_unicode_ci
-    # 健康检查配置
     healthcheck:
-      # 使用 mysqladmin ping 命令检查服务是否正常
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      # 每 10 秒检查一次
       interval: 10s
-      # 检查超时时间为 5 秒
       timeout: 5s
-      # 最多重试 5 次
       retries: 5
-    # 网络配置
     networks:
       - mysql_network
 
-# 定义网络
 networks:
-  # 创建名为 mysql_network 的桥接网络
   mysql_network:
     driver: bridge 
