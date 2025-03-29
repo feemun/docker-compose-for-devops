@@ -4,7 +4,7 @@ networks:
 
 services:
   zookeeper:
-    image: 'bitnami/zookeeper:3.8.1'
+    image: 'bitnami/zookeeper:latest'
     container_name: zookeeper
     user: root
     networks:
@@ -26,7 +26,7 @@ services:
     restart: unless-stopped
 
   kafka:
-    image: 'bitnami/kafka:3.5.1'
+    image: 'bitnami/kafka:latest'
     container_name: kafka_01
     user: root
     depends_on:
@@ -65,7 +65,7 @@ services:
     restart: unless-stopped
 
   kafdrop:
-    image: 'obsidiandynamics/kafdrop:3.30.0'
+    image: 'obsidiandynamics/kafdrop:latest'
     container_name: kafdrop
     depends_on:
       - kafka
