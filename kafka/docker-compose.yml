@@ -1,19 +1,19 @@
-version: '3.8'
-
 networks:
   app-tier:
     driver: bridge
 
 services:
   zookeeper:
-    image: 'bitnami/zookeeper:latest'
+    image: 'bitnami/zookeeper:3.8.1'
     container_name: zookeeper
+    user: root
     networks:
       - app-tier
     environment:
       - ALLOW_ANONYMOUS_LOGIN=yes
       - ZOO_SERVER_ID=1
       - ZOO_SERVERS=server.1=zookeeper:2888:3888
+      - ZOO_4LW_COMMANDS_WHITELIST=*
     ports:
       - "2181:2181"
     volumes:
@@ -26,8 +26,9 @@ services:
     restart: unless-stopped
 
   kafka:
-    image: 'bitnami/kafka:latest'
+    image: 'bitnami/kafka:3.5.1'
     container_name: kafka_01
+    user: root
     depends_on:
       - zookeeper
     networks:
@@ -48,6 +49,11 @@ services:
       - KAFKA_CFG_LOG_RETENTION_HOURS=168
       - KAFKA_CFG_LOG_RETENTION_CHECK_INTERVAL_MS=300000
       - KAFKA_HEAP_OPTS=-Xmx512M -Xms256M
+      - KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+      - KAFKA_CFG_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1
+      - KAFKA_CFG_TRANSACTION_STATE_LOG_MIN_ISR=1
+      - KAFKA_CFG_LOG_FLUSH_INTERVAL_MESSAGES=10000
+      - KAFKA_CFG_LOG_FLUSH_INTERVAL_MS=1000
     volumes:
       - ./kafka_data:/bitnami/kafka
       - ./kafka_logs:/opt/bitnami/kafka/logs
@@ -59,7 +65,7 @@ services:
     restart: unless-stopped
 
   kafdrop:
-    image: 'obsidiandynamics/kafdrop:latest'
+    image: 'obsidiandynamics/kafdrop:3.30.0'
     container_name: kafdrop
     depends_on:
       - kafka
