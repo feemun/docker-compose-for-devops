@@ -1,6 +1,6 @@
 services:
   mysql:
-    image: mysql:latest
+    image: mysql:8.0 
     container_name: mysql_dev
     restart: unless-stopped
     environment:
@@ -17,7 +17,10 @@ services:
       - ./logs:/var/log/mysql
     command: --character-set-server=utf8mb4
              --collation-server=utf8mb4_unicode_ci
-             --authentication-policy=mysql_native_password
+             --default-authentication-plugin=caching_sha2_password
+             --explicit_defaults_for_timestamp=1
+             --max_allowed_packet=128M
+             --innodb_buffer_pool_size=256M
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
