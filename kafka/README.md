@@ -1,66 +1,54 @@
-# Kafka 开发环境
+# Kafka 开发环境 (KRaft 模式)
 
-这是一个基于 Docker Compose 的 Kafka 开发环境配置，包含了 Kafka、Zookeeper 和 Kafdrop 管理工具。
+## 环境说明
 
-## 环境要求
+本配置使用 Kafka KRaft 模式，无需 Zookeeper 组件。
 
-- Docker
-- Docker Compose
-
-## 目录结构
-
+### 目录结构
 ```
 kafka/
-├── docker-compose.yml    # Docker Compose 配置文件
-├── README.md            # 本文档
-├── zookeeper_data/      # Zookeeper 数据目录
+├── docker-compose.yml   # Docker 编排配置文件
 ├── kafka_data/         # Kafka 数据目录
-└── kafka_logs/         # Kafka 日志目录
+└── README.md           # 说明文档
 ```
 
-## 服务说明
+### 服务说明
 
-### 1. Kafka
-- 版本：3.5.1
+#### Kafka
+- 版本：3.5.1 (bitnami/kafka)
 - 端口：9092
-- 主要配置：
-  - 自动创建主题
-  - 允许删除主题
+- 配置特点：
+  - KRaft 模式运行（无 Zookeeper）
+  - 节点 ID：1
+  - 角色：controller + broker
+  - 自动创建主题：启用
+  - 删除主题：启用
   - 默认分区数：3
-  - 复制因子：1
-  - 日志保留时间：168小时
-  - JVM 内存：最大 512MB，初始 256MB
+  - 默认副本因子：1
+  - 内存配置：最小 256M，最大 512M
 
-### 2. Zookeeper
-- 版本：3.8.1
-- 端口：2181
-- 配置：
-  - 允许匿名登录
-  - 单节点模式
-
-### 3. Kafdrop
+#### Kafdrop
 - 版本：3.30.0
 - 端口：9000
-- 功能：Kafka 集群的可视化管理工具
+- Web 管理界面：http://localhost:9000
+- 内存配置：最小 32M，最大 64M
 
 ## 快速开始
 
-### 1. 启动服务
-
+### 1. 准备工作
 ```bash
-# 创建必要的目录
-mkdir -p zookeeper_data kafka_data kafka_logs
+# 创建数据目录
+mkdir -p kafka_data
 
 # 设置目录权限
-chmod 777 zookeeper_data kafka_data kafka_logs
-
-# 启动服务
-docker-compose up -d
+chmod 777 kafka_data
 ```
 
-### 2. 验证服务状态
-
+### 2. 启动服务
 ```bash
+# 启动所有服务
+docker-compose up -d
+
 # 查看服务状态
 docker-compose ps
 
@@ -68,98 +56,88 @@ docker-compose ps
 docker-compose logs -f
 ```
 
-### 3. 访问管理界面
-
-打开浏览器访问：http://localhost:9000
+### 3. 访问服务
+- Kafdrop 管理界面：http://localhost:9000
 
 ## 常用操作
 
-### 创建主题
-
+### 主题管理
 ```bash
 # 进入 Kafka 容器
-docker exec -it kafka_01 bash
+docker exec -it kafka bash
 
 # 创建主题
-kafka-topics.sh --create --topic test-topic --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
-```
+kafka-topics.sh --create --topic my-topic --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
 
-### 查看主题列表
-
-```bash
+# 查看主题列表
 kafka-topics.sh --list --bootstrap-server localhost:9092
+
+# 查看主题详情
+kafka-topics.sh --describe --topic my-topic --bootstrap-server localhost:9092
 ```
 
-### 发送消息
-
+### 消息操作
 ```bash
-# 进入 Kafka 容器
-docker exec -it kafka_01 bash
-
 # 发送消息
-kafka-console-producer.sh --broker-list localhost:9092 --topic test-topic
+kafka-console-producer.sh --topic my-topic --bootstrap-server localhost:9092
+
+# 消费消息
+kafka-console-consumer.sh --topic my-topic --from-beginning --bootstrap-server localhost:9092
 ```
 
-### 接收消息
-
+## 环境重置
 ```bash
-# 进入 Kafka 容器
-docker exec -it kafka_01 bash
+# 停止并删除所有容器和卷
+docker-compose down -v
 
-# 接收消息
-kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic test-topic --from-beginning
+# 删除数据目录
+rm -rf kafka_data
+
+# 重新创建目录
+mkdir kafka_data
+chmod 777 kafka_data
+
+# 重新启动服务
+docker-compose up -d
 ```
+
+## 故障排查
+
+1. 如果 Kafdrop 无法连接到 Kafka：
+   - 检查网络连接：`docker exec -it kafdrop ping kafka`
+   - 检查 Kafka 状态：`docker exec -it kafka kafka-topics.sh --list --bootstrap-server localhost:9092`
+   - 查看服务日志：`docker-compose logs -f`
+
+2. 如果 Kafka 启动失败：
+   - 检查数据目录权限
+   - 检查端口占用情况
+   - 查看详细日志：`docker-compose logs kafka`
 
 ## 配置说明
 
-### Kafka 主要配置参数
-
+### Kafka 配置参数
+- `KAFKA_CFG_NODE_ID=1`：节点 ID
+- `KAFKA_CFG_PROCESS_ROLES=controller,broker`：进程角色
+- `KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=1@kafka:9093`：控制器选民配置
+- `KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093`：监听器配置
+- `KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092`：广播地址
 - `KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true`：允许自动创建主题
 - `KAFKA_CFG_DELETE_TOPIC_ENABLE=true`：允许删除主题
 - `KAFKA_CFG_NUM_PARTITIONS=3`：默认分区数
 - `KAFKA_CFG_DEFAULT_REPLICATION_FACTOR=1`：默认复制因子
-- `KAFKA_CFG_LOG_RETENTION_HOURS=168`：日志保留时间（7天）
 - `KAFKA_HEAP_OPTS=-Xmx512M -Xms256M`：JVM 内存配置
 
-### Zookeeper 配置
-
-- `ALLOW_ANONYMOUS_LOGIN=yes`：允许匿名登录
-- `ZOO_SERVER_ID=1`：服务器 ID
-- `ZOO_SERVERS=server.1=zookeeper:2888:3888`：服务器配置
-
-## 故障排除
-
-1. 如果遇到权限问题：
-   ```bash
-   chmod 777 zookeeper_data kafka_data kafka_logs
-   ```
-
-2. 如果服务无法启动：
-   ```bash
-   # 查看详细日志
-   docker-compose logs -f
-   
-   # 重启服务
-   docker-compose restart
-   ```
-
-3. 如果需要完全重置：
-   ```bash
-   # 停止并删除所有容器和卷
-   docker-compose down -v
-   
-   # 删除数据目录
-   rm -rf zookeeper_data kafka_data kafka_logs
-   
-   # 重新创建目录并启动服务
-   mkdir zookeeper_data kafka_data kafka_logs
-   chmod 777 zookeeper_data kafka_data kafka_logs
-   docker-compose up -d
-   ```
+### Kafdrop 配置参数
+- `KAFKA_BROKERCONNECT=kafka:9092`：Kafka 连接地址
+- `JVM_OPTS=-Xms32M -Xmx64M`：JVM 内存配置
+- `SERVER_SERVLET_CONTEXTPATH=/`：Web 上下文路径
 
 ## 注意事项
 
 1. 这是一个开发环境配置，不建议用于生产环境
-2. 数据持久化存储在本地目录中
-3. 默认配置适合开发和测试使用
-4. 生产环境需要根据实际需求调整配置参数 
+2. 使用了 KRaft 模式，不需要 Zookeeper
+3. 数据持久化存储在本地目录中
+4. 默认配置适合开发和测试使用
+5. 生产环境需要根据实际需求调整配置参数
+6. 建议定期备份数据目录
+7. 如果需要外部访问，确保防火墙允许相应端口 
