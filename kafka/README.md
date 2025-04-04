@@ -15,7 +15,7 @@ kafka/
 ### 服务说明
 
 #### Kafka
-- 版本：4.0 (bitnami/kafka)
+- 版本：latest (bitnami/kafka)
 - 端口：
   - 9092 (PLAINTEXT，主机访问)
   - 9094 (EXTERNAL，容器间访问)
@@ -32,7 +32,7 @@ kafka/
   - 角色：controller + broker
   - 自动创建主题：启用
   - 删除主题：启用
-  - 默认分区数：3
+  - 默认分区数：2
   - 默认副本因子：1
   - 内存配置：最小 256M，最大 512M
 
@@ -41,6 +41,8 @@ kafka/
 - 端口：9000
 - Web 管理界面：http://localhost:9000
 - Kafka Broker 连接：kafka_1:9094
+- Kafka UI 管理界面：http://localhost:8080
+- Kafka Exporter 监控端口：9308
 - 内存配置：最小 32M，最大 64M
 
 ## 快速开始
