@@ -6,8 +6,8 @@ services:
   kafka_1:
     image: bitnami/kafka:latest
     ports:
-      - "9092:9092"   # for host (PLAINTEXT)
-      - "9094:9094"   # for container (EXTERNAL)
+      - "9092:9092"
+      - "9094:9094"
     volumes:
       - kafka_data:/bitnami
     environment:
@@ -51,6 +51,18 @@ services:
       - kafka_1
     networks:
       - kafka_network
+
+  kafka_exporter:
+    image: danielqsj/kafka-exporter:latest
+    container_name: kafka_exporter
+    ports:
+      - "9308:9308"
+    command:
+      - '--kafka.server=kafka_1:9092'
+    networks:
+      - kafka_network
+    depends_on:
+      - kafka_1
 
 volumes:
   kafka_data:
