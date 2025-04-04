@@ -15,11 +15,20 @@ kafka/
 ### 服务说明
 
 #### Kafka
-- 版本：3.5.1 (bitnami/kafka)
-- 端口：9092
+- 版本：4.0 (bitnami/kafka)
+- 端口：
+  - 9092 (PLAINTEXT，主机访问)
+  - 9094 (EXTERNAL，容器间访问)
 - 配置特点：
   - KRaft 模式运行（无 Zookeeper）
   - 节点 ID：1
+- 监听器配置：
+  - PLAINTEXT://:9092
+  - CONTROLLER://:9093
+  - EXTERNAL://:9094
+- 广告监听器：
+  - PLAINTEXT://localhost:9092
+  - EXTERNAL://kafka_1:9094
   - 角色：controller + broker
   - 自动创建主题：启用
   - 删除主题：启用
@@ -31,6 +40,7 @@ kafka/
 - 版本：3.30.0
 - 端口：9000
 - Web 管理界面：http://localhost:9000
+- Kafka Broker 连接：kafka_1:9094
 - 内存配置：最小 32M，最大 64M
 
 ## 快速开始
@@ -140,4 +150,4 @@ docker-compose up -d
 4. 默认配置适合开发和测试使用
 5. 生产环境需要根据实际需求调整配置参数
 6. 建议定期备份数据目录
-7. 如果需要外部访问，确保防火墙允许相应端口 
+7. 如果需要外部访问，确保防火墙允许相应端口
