@@ -1,0 +1,12 @@
+services:
+  hbase:
+    build: .
+    container_name: hbase
+    ports:
+      - "16010:16010"
+      - "2181:2181"
+    volumes:
+      - ./conf:/conf                # 配置文件挂载进容器
+      - ./data:/hbase-data           # HBase数据挂载
+      - ./zookeeper:/hbase-zookeeper # Zookeeper数据挂载
+    restart: unless-stopped
