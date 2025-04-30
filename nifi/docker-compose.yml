@@ -1,0 +1,16 @@
+services:
+  nifi:
+    image: apache/nifi:2.2.0
+    container_name: nifi
+    ports:
+      - "8443:8443"
+    environment:
+      - SINGLE_USER_CREDENTIALS_USERNAME=admin
+      - SINGLE_USER_CREDENTIALS_PASSWORD=ctsBtRBKHRAx69EqUghvvgEvjnaLjFEB
+    volumes:
+      # 挂载自定义算子包目录
+      - ./lib:/home/lib
+      # 挂载驱动目录
+      - ./drivers:/home/drivers
+    restart: always
+    user: root  # 强制以 root 用户运行

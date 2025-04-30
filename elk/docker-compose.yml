@@ -1,30 +1,38 @@
-networks:
-  elastic:
-    driver: bridge
+version: '3.7'
 
 services:
   elasticsearch:
-    image: 'elasticsearch:8.15.1'
-    container_name: es01
-    networks:
-      - elastic
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.28
+    container_name: elasticsearch
+    environment:
+      - node.name=es-node
+      - cluster.name=es-docker-cluster
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - xpack.security.enabled=true
+      - ELASTIC_PASSWORD=6vYgP2tB7xQe   # <<< 这里是 elastic 用户的密码
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
     ports:
       - "9200:9200"
       - "9300:9300"
-    environment:
-      - discovery.type=single-node
-      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"  # 调整内存大小，根据需求修改
-        #    volumes:
-      #      - /home/catfish/docker/docker-data/elasticsearch/data:/usr/share/elasticsearch/data  # 映射数据目录
-      #      - /home/catfish/docker/docker-data/elasticsearch/logs:/usr/share/elasticsearch/logs  # 映射日志目录
 
-  kibana-1:
-    image: 'kibana:8.15.1'
-    container_name: kib01
-    networks:
-      - elastic
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.17.28
+    container_name: kibana
+    depends_on:
+      - elasticsearch
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - ELASTICSEARCH_USERNAME=elastic
+      - ELASTICSEARCH_PASSWORD=6vYgP2tB7xQe   # <<< 这里也要写 elastic 密码
     ports:
       - "5601:5601"
-        #    environment:
-        #      SERVER_NAME: kibana.example.org
-        #      ELASTICSEARCH_HOSTS: '["http://es01:9200"]' # es01为es实例的container_name
+
+volumes:
+  es_data:
