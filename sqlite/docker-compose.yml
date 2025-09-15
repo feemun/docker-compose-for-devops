@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  sqlite:
+    # 使用官方alpine/sqlite镜像，Docker Hub使用量最高
+    image: alpine/sqlite:latest
+    container_name: sqlite_db
+    volumes:
+      - ./data:/data
+    restart: unless-stopped
+    working_dir: /data
+    command: >
+      sh -c '
+      sqlite3 database.db "CREATE TABLE IF NOT EXISTS test (id INTEGER PRIMARY KEY, name TEXT);" &&
+      tail -f /dev/null
+      '
+
+volumes:
+  sqlite_data:
+    driver: local

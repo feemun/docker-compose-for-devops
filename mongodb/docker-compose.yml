@@ -1,0 +1,31 @@
+services:
+  mongodb:
+    image: mongo:6.0
+    container_name: mongodb_01
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
+      MONGO_INITDB_DATABASE: admin
+    ports:
+      - "30001:27017"
+    volumes:
+      - mongodb_data:/data/db              # MongoDB 数据卷
+      - mongodb_logs:/var/log/mongodb      # MongoDB 日志卷
+      - ./init-scripts:/docker-entrypoint-initdb.d:ro
+    networks:
+      - mongodb_network
+    restart: unless-stopped
+    command: >
+      mongod
+      --auth
+      --logpath /var/log/mongodb/mongod.log
+      --logappend
+      --bind_ip_all
+
+volumes:
+  mongodb_data:    # MongoDB 数据卷
+  mongodb_logs:    # MongoDB 日志卷
+
+networks:
+  mongodb_network:
+    driver: bridge
