@@ -5,7 +5,7 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: root
-      MONGO_INITDB_DATABASE: admin
+      MONGO_INITDB_DATABASE: admin  # 指定初始化脚本执行的数据库上下文，admin数据库用于管理操作和用户认证
     ports:
       - "30001:27017"
     volumes:
