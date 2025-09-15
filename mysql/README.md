@@ -37,13 +37,7 @@ mysql/
 ### 1. 启动服务
 
 ```bash
-# 创建必要的目录
-mkdir -p data conf logs
-
-# 设置目录权限
-chmod 777 data conf logs
-
-# 启动服务
+# 启动服务（Docker 卷会自动创建）
 docker-compose up -d
 ```
 
@@ -88,9 +82,16 @@ mysql -h localhost -P 3306 -u dev_user -p
 - `MYSQL_ROOT_HOST=%`：允许从任何主机连接 root 用户
 
 ### 数据持久化
-- 数据文件：`./data:/var/lib/mysql`
-- 配置文件：`./conf:/etc/mysql/conf.d`
-- 日志文件：`./logs:/var/log/mysql`
+使用 Docker 卷进行数据持久化，避免本地目录依赖：
+- 数据文件：`mysql_01_data:/var/lib/mysql`
+- 配置文件：`mysql_01_conf:/etc/mysql/conf.d`
+- 日志文件：`mysql_01_logs:/var/log/mysql`
+
+Docker 卷的优势：
+- 数据完全由 Docker 管理，不依赖本地目录结构
+- 更好的跨平台兼容性
+- 自动处理权限问题
+- 便于备份和迁移
 
 ### MySQL 配置参数
 - `character-set-server=utf8mb4`：使用 UTF8MB4 字符集
@@ -151,9 +152,15 @@ mysqldump -u dev_user -pdev123 dev_db > /path/to/backup.sql
 
 ## 故障排除
 
-1. 如果遇到权限问题：
+1. 如果需要查看 Docker 卷信息：
    ```bash
-   chmod 777 data conf logs
+   # 查看所有卷
+   docker volume ls
+   
+   # 查看特定卷的详细信息
+   docker volume inspect mysql_mysql_01_data
+   docker volume inspect mysql_mysql_01_conf
+   docker volume inspect mysql_mysql_01_logs
    ```
 
 2. 如果服务无法启动：
@@ -170,20 +177,25 @@ mysqldump -u dev_user -pdev123 dev_db > /path/to/backup.sql
    # 停止并删除所有容器和卷
    docker-compose down -v
    
-   # 删除数据目录
-   rm -rf data conf logs
-   
-   # 重新创建目录并启动服务
-   mkdir data conf logs
-   chmod 777 data conf logs
+   # 重新启动服务（卷会自动重新创建）
    docker-compose up -d
+   ```
+
+4. 备份和恢复数据：
+   ```bash
+   # 备份数据卷
+   docker run --rm -v mysql_mysql_01_data:/data -v $(pwd):/backup alpine tar czf /backup/mysql_backup.tar.gz -C /data .
+   
+   # 恢复数据卷
+   docker run --rm -v mysql_mysql_01_data:/data -v $(pwd):/backup alpine tar xzf /backup/mysql_backup.tar.gz -C /data
    ```
 
 ## 注意事项
 
 1. 这是一个开发环境配置，不建议用于生产环境
-2. 数据持久化存储在本地目录中
+2. 数据使用 Docker 卷进行持久化存储，由 Docker 统一管理
 3. 默认配置适合开发和测试使用
 4. 生产环境需要根据实际需求调整配置参数
-5. 建议定期备份数据目录
-6. MySQL 8.0 默认使用 caching_sha2_password 认证方式，某些旧版本客户端可能需要修改认证方式 
+5. 建议定期备份 Docker 卷数据
+6. MySQL 8.0 默认使用 caching_sha2_password 认证方式，某些旧版本客户端可能需要修改认证方式
+7. Docker 卷数据在容器删除后仍会保留，除非使用 `docker-compose down -v` 强制删除

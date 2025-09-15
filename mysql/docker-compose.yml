@@ -12,12 +12,20 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      - ./data:/var/lib/mysql
-      - ./conf:/etc/mysql/conf.d
-      - ./logs:/var/log/mysql
+      - mysql_01_data:/var/lib/mysql
+      - mysql_01_conf:/etc/mysql/conf.d
+      - mysql_01_logs:/var/log/mysql
     networks:
       - mysql_network
 
+volumes:
+  mysql_01_data:
+    driver: local
+  mysql_01_conf:
+    driver: local
+  mysql_01_logs:
+    driver: local
+
 networks:
   mysql_network:
-    driver: bridge 
+    driver: bridge
