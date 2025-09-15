@@ -86,12 +86,25 @@ mysql -h localhost -P 3306 -u dev_user -p
 - 数据文件：`mysql_01_data:/var/lib/mysql`
 - 配置文件：`mysql_01_conf:/etc/mysql/conf.d`
 - 日志文件：`mysql_01_logs:/var/log/mysql`
+- 初始化脚本：`./init-scripts:/docker-entrypoint-initdb.d`
 
 Docker 卷的优势：
 - 数据完全由 Docker 管理，不依赖本地目录结构
 - 更好的跨平台兼容性
 - 自动处理权限问题
 - 便于备份和迁移
+
+### 数据库初始化
+项目包含了完整的测试数据初始化脚本 `init-scripts/01-init-test-data.sql`，包含：
+- **经典业务表结构**：用户、商品分类、商品、订单、订单详情、购物车等
+- **测试数据**：预置了用户、商品、订单等测试数据
+- **数据库视图**：订单统计、库存预警、用户购买统计等实用视图
+- **存储过程**：购物车总金额计算、库存更新等
+- **触发器**：订单创建自动减库存
+- **函数**：订单折扣计算
+- **系统配置表**：网站配置参数
+
+首次启动容器时，MySQL会自动执行 `init-scripts` 目录下的所有 `.sql` 文件。
 
 ### MySQL 配置参数
 - `character-set-server=utf8mb4`：使用 UTF8MB4 字符集
@@ -104,6 +117,73 @@ Docker 卷的优势：
 ### 网络配置
 - 使用独立的 `mysql_network` 网络
 - 端口映射：3306:3306
+
+## 测试数据说明
+
+### 预置表结构
+
+1. **users** - 用户表
+   - 包含用户基本信息：用户名、邮箱、密码、手机号等
+   - 预置5个测试用户（admin, john_doe, jane_smith, bob_wilson, alice_brown）
+
+2. **categories** - 商品分类表
+   - 支持多级分类结构
+   - 预置电子产品、服装鞋帽、家居用品等分类
+
+3. **products** - 商品表
+   - 完整的商品信息：名称、SKU、价格、库存、重量等
+   - 预置10个测试商品（iPhone、MacBook、Nike鞋等）
+
+4. **orders** - 订单表
+   - 订单状态管理、支付信息、地址信息
+   - 预置5个不同状态的测试订单
+
+5. **order_items** - 订单详情表
+   - 订单商品明细信息
+
+6. **shopping_cart** - 购物车表
+   - 用户购物车商品管理
+
+7. **system_config** - 系统配置表
+   - 网站配置参数管理
+
+### 预置视图
+
+- **order_summary** - 订单汇总视图
+- **low_stock_products** - 低库存商品预警视图  
+- **user_purchase_stats** - 用户购买统计视图
+
+### 预置存储过程
+
+- **GetCartTotal** - 计算用户购物车总金额
+- **UpdateProductStock** - 安全更新商品库存
+
+### 预置函数
+
+- **CalculateDiscount** - 根据订单金额计算折扣
+
+### 测试查询示例
+
+```sql
+-- 查看所有用户
+SELECT * FROM users;
+
+-- 查看商品库存情况
+SELECT * FROM low_stock_products;
+
+-- 查看订单统计
+SELECT * FROM order_summary;
+
+-- 查看用户购买统计
+SELECT * FROM user_purchase_stats;
+
+-- 调用存储过程计算购物车总额
+CALL GetCartTotal(2, @total);
+SELECT @total as cart_total;
+
+-- 使用函数计算折扣
+SELECT CalculateDiscount(5000) as discount_amount;
+```
 
 ## 常用操作
 

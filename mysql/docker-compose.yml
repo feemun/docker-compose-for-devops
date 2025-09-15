@@ -7,7 +7,7 @@ services:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: test
       MYSQL_USER: catfish
-      MYSQL_PASSWORD: root
+      MYSQL_PASSWORD: catfish
       MYSQL_ROOT_HOST: '%'
     ports:
       - "3306:3306"
@@ -15,6 +15,7 @@ services:
       - mysql_01_data:/var/lib/mysql
       - mysql_01_conf:/etc/mysql/conf.d
       - mysql_01_logs:/var/log/mysql
+      - ./init-scripts:/docker-entrypoint-initdb.d
     networks:
       - mysql_network
 
