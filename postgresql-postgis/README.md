@@ -23,11 +23,12 @@ postgresql-postgis/
 - **端口**: 5432
 - **主要数据库**:
   - `postgres`: 默认数据库
-  - `maindb`: 业务数据库
-  - `gisdb`: 空间数据库（已启用PostGIS扩展）
+  - `testdb`: 普通业务数据库（包含测试数据）
+  - `gisdb`: PostGIS空间数据库（包含空间测试数据）
 - **用户**:
   - `postgres/postgres`: 超级用户
-  - `gisuser/gispassword`: 空间数据库专用用户
+  - `testuser/testpass`: 普通数据库专用用户
+  - `gisuser/gispass`: PostGIS数据库专用用户
 
 #### 主要特性
 - 预装PostGIS空间数据库扩展
@@ -78,16 +79,19 @@ docker-compose exec postgresql-postgis psql -U postgres -d postgres
 psql -h localhost -p 5432 -U postgres -d postgres
 ```
 
-#### 连接业务数据库
+#### 连接普通业务数据库
 ```bash
-# 使用容器内连接
-docker-compose exec postgresql-postgis psql -U postgres -d maindb
+# 使用容器内连接（超级用户）
+docker-compose exec postgresql-postgis psql -U postgres -d testdb
+
+# 使用容器内连接（专用用户）
+docker-compose exec postgresql-postgis psql -U testuser -d testdb
 
 # 或者从主机直接连接
-psql -h localhost -p 5432 -U postgres -d maindb
+psql -h localhost -p 5432 -U testuser -d testdb
 ```
 
-#### 连接空间数据库
+#### 连接PostGIS空间数据库
 ```bash
 # 使用容器内连接（超级用户）
 docker-compose exec postgresql-postgis psql -U postgres -d gisdb
@@ -108,10 +112,10 @@ psql -h localhost -p 5432 -U gisuser -d gisdb
    - 端口：5432
    - 用户名：postgres
    - 密码：postgres
-   - 数据库：postgres（或maindb、gisdb）
+   - 数据库：postgres（或testdb、gisdb）
 3. 测试连接成功后即可管理所有数据库
 
-连接后可以看到三个数据库：postgres、maindb 和 gisdb（带有PostGIS扩展）
+连接后可以看到三个数据库：postgres、testdb（包含测试数据）和 gisdb（PostGIS空间数据库）
 
 ### 4. 验证PostGIS扩展
 
@@ -151,41 +155,105 @@ SELECT id, name, ST_AsText(geom) FROM test_points;
 SELECT ST_AsText(ST_MakePoint(-71.060316, 42.358431));
 ```
 
-## 常用PostGIS操作示例
+## 测试数据说明
 
-### 创建空间表
+### 普通业务数据库（testdb）
+
+包含完整的电商业务测试数据：
+
+#### 数据表结构
+- **users**: 用户表（5个测试用户）
+- **categories**: 商品分类表（主分类和子分类）
+- **products**: 商品表（8个测试商品）
+- **orders**: 订单表（5个测试订单）
+- **order_items**: 订单项表（订单详情）
+
+#### 测试查询示例
 ```sql
--- 创建包含几何字段的表
-CREATE TABLE locations (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(100),
-    geom GEOMETRY(POINT, 4326)
-);
+-- 连接到testdb数据库
+\c testdb
 
--- 插入空间数据
-INSERT INTO locations (name, geom) 
-VALUES ('Boston', ST_GeomFromText('POINT(-71.060316 42.358431)', 4326));
+-- 查看所有用户
+SELECT * FROM users;
 
--- 空间查询
-SELECT name, ST_AsText(geom) 
-FROM locations 
-WHERE ST_DWithin(geom, ST_GeomFromText('POINT(-71.0 42.0)', 4326), 0.1);
+-- 查看商品及其分类
+SELECT p.name, p.price, c.name as category 
+FROM products p 
+JOIN categories c ON p.category_id = c.id;
+
+-- 查看用户订单统计
+SELECT u.username, COUNT(o.id) as order_count, SUM(o.total_amount) as total_spent
+FROM users u 
+LEFT JOIN orders o ON u.id = o.user_id 
+GROUP BY u.id, u.username;
+
+-- 查看热销商品
+SELECT p.name, SUM(oi.quantity) as total_sold
+FROM products p
+JOIN order_items oi ON p.id = oi.product_id
+GROUP BY p.id, p.name
+ORDER BY total_sold DESC;
 ```
 
-### 创建空间索引
+### PostGIS空间数据库（gisdb）
+
+包含丰富的地理空间测试数据：
+
+#### 空间数据表
+- **cities**: 世界主要城市（点数据，8个城市）
+- **roads**: 著名道路（线数据，4条道路）
+- **districts**: 行政区域（面数据，4个区域）
+- **points_of_interest**: 兴趣点（POI，8个著名景点）
+
+#### 空间查询示例
 ```sql
--- 创建空间索引提高查询性能
-CREATE INDEX idx_locations_geom ON locations USING GIST (geom);
+-- 连接到gisdb数据库
+\c gisdb
+
+-- 查看所有城市
+SELECT name, country, population, ST_AsText(geom) as coordinates FROM cities;
+
+-- 查找距离北京最近的3个城市
+SELECT name, country, 
+       ST_Distance(geom, (SELECT geom FROM cities WHERE name = '北京')) as distance
+FROM cities 
+WHERE name != '北京'
+ORDER BY distance LIMIT 3;
+
+-- 查找指定区域内的兴趣点
+SELECT poi.name, poi.category, poi.address
+FROM points_of_interest poi, districts d
+WHERE d.name = '朝阳区' AND ST_Within(poi.geom, d.geom);
+
+-- 计算道路长度统计
+SELECT road_type, COUNT(*) as count, 
+       ROUND(AVG(length_km)::numeric, 2) as avg_length,
+       ROUND(SUM(length_km)::numeric, 2) as total_length
+FROM roads 
+GROUP BY road_type;
+
+-- 空间缓冲区查询（查找城市周围10公里内的兴趣点）
+SELECT c.name as city, poi.name as poi_name, poi.category
+FROM cities c, points_of_interest poi
+WHERE ST_DWithin(c.geom::geography, poi.geom::geography, 10000)
+ORDER BY c.name, poi.name;
 ```
+
+### 性能优化
+
+两个数据库都已创建了适当的索引：
+- **普通索引**: 用于常规字段查询优化
+- **空间索引**: 使用GiST索引优化空间查询性能
+- **唯一索引**: 保证数据完整性
 
 ## 数据管理
 
 ### 备份数据库
 ```bash
-# 备份业务数据库
-docker exec postgresql_postgis pg_dump -U postgres maindb > maindb_backup.sql
+# 备份普通业务数据库
+docker exec postgresql_postgis pg_dump -U postgres testdb > testdb_backup.sql
 
-# 备份空间数据库
+# 备份PostGIS空间数据库
 docker exec postgresql_postgis pg_dump -U postgres gisdb > gisdb_backup.sql
 
 # 备份所有数据库
@@ -194,10 +262,10 @@ docker exec postgresql_postgis pg_dumpall -U postgres > all_databases_backup.sql
 
 ### 恢复数据库
 ```bash
-# 恢复业务数据库
-docker exec -i postgresql_postgis psql -U postgres maindb < maindb_backup.sql
+# 恢复普通业务数据库
+docker exec -i postgresql_postgis psql -U postgres testdb < testdb_backup.sql
 
-# 恢复空间数据库
+# 恢复PostGIS空间数据库
 docker exec -i postgresql_postgis psql -U postgres gisdb < gisdb_backup.sql
 
 # 恢复所有数据库

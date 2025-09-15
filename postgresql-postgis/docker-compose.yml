@@ -7,7 +7,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       # 自动创建额外数据库
-      POSTGRES_MULTIPLE_DATABASES: test,gisdb,405
+      POSTGRES_MULTIPLE_DATABASES: test
     ports:
       - "5432:5432"
     volumes:
