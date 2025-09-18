@@ -1,0 +1,89 @@
+version: '3.8'
+
+services:
+  nginx-proxy-manager:
+    image: 'jc21/nginx-proxy-manager:latest'
+    container_name: nginx-proxy-manager
+    restart: unless-stopped
+    ports:
+      # 管理界面端口
+      - '81:81'
+      # HTTP端口
+      - '80:80'
+      # HTTPS端口
+      - '443:443'
+    volumes:
+      # 数据持久化
+      - npm_data:/data
+      # Let's Encrypt证书存储
+      - npm_letsencrypt:/etc/letsencrypt
+      # 自定义SSL证书目录
+      - ./ssl:/etc/nginx/ssl:ro
+      # 日志目录
+      - npm_logs:/var/log/nginx
+    environment:
+      # 数据库配置（使用内置SQLite）
+      DB_SQLITE_FILE: "/data/database.sqlite"
+      # 禁用IPv6（可选）
+      DISABLE_IPV6: 'true'
+      # 设置时区
+      TZ: 'Asia/Shanghai'
+      # 启用调试模式（生产环境可设为false）
+      DEBUG: 'false'
+    # 健康检查
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:81"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    # 资源限制
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+    # 日志配置
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    # 安全配置
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - npm-network
+
+volumes:
+  npm_data:
+    driver: local
+  npm_letsencrypt:
+    driver: local
+  npm_logs:
+    driver: local
+
+networks:
+  npm-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.0.0/16
+
+# 可选：如果需要外部数据库，可以添加MySQL服务
+# mysql:
+#   image: 'mysql:8.0'
+#   container_name: npm-mysql
+#   restart: unless-stopped
+#   environment:
+#     MYSQL_ROOT_PASSWORD: 'npm_root_password'
+#     MYSQL_DATABASE: 'npm'
+#     MYSQL_USER: 'npm'
+#     MYSQL_PASSWORD: 'npm_password'
+#   volumes:
+#     - ./mysql:/var/lib/mysql
+#   networks:
+#     - npm-network
