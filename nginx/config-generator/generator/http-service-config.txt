@@ -1,0 +1,29 @@
+# Nginx服务配置文件
+# 格式: 服务名称:宿主机端口:服务别名(URL路径)
+# 注释行以 # 开头
+
+# Web应用服务
+my-app:8080:my-app
+api-server:3000:api
+web-dashboard:8081:dashboard
+
+# 数据库管理工具
+phpmyadmin:8082:phpmyadmin
+adminer:8083:adminer
+redis-commander:8084:redis
+
+# 监控服务
+prometheus:9090:prometheus
+grafana:3001:grafana
+jaeger:16686:jaeger
+
+# 开发工具
+code-server:8085:code
+jupyter:8888:jupyter
+
+# 示例访问地址:
+# https://localhost/my-app     -> http://localhost:8080
+# https://localhost/api       -> http://localhost:3000
+# https://localhost/dashboard -> http://localhost:8081
+# https://localhost/prometheus -> http://localhost:9090
+# https://localhost/grafana   -> http://localhost:3001

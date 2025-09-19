@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  nginx:
+    image: 'nginx:alpine'
+    container_name: nginx-https-proxy
+    restart: unless-stopped
+    ports:
+      # HTTP端口
+      - '80:80'
+      # HTTPS端口
+      - '443:443'
+    volumes:
+      # 自定义SSL证书目录
+      - ./ssl:/etc/ssl/certs:ro
+      - ./ssl:/etc/ssl/private:ro
+      # 自定义Nginx配置
+      - ./nginx-config/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx-config/sites-enabled:/etc/nginx/sites-enabled:ro
+      # 日志目录
+      - nginx_logs:/var/log/nginx
+    environment:
+      # 设置时区
+      TZ: 'Asia/Shanghai'
+    # 健康检查
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    # 资源限制
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    # 日志配置
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    # 安全配置
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - nginx-network
+
+volumes:
+  nginx_logs:
+    driver: local
+
+networks:
+  nginx-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.26.0.0/16
+
+# 内网 HTTPS 代理服务
+# 使用纯 Nginx 镜像提供 HTTPS 代理功能
+# 支持自签名证书和多服务代理
