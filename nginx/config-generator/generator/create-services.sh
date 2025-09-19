@@ -167,7 +167,11 @@ while IFS= read -r line || [ -n "$line" ]; do
     declare -a config_parts
     
     # 解析配置行
-    parse_result=$(parse_config_line "$line" config_parts)
+    if parse_config_line "$line" config_parts; then
+        parse_result=0
+    else
+        parse_result=$?
+    fi
     case $parse_result in
         1) # 空行或注释行
             continue
