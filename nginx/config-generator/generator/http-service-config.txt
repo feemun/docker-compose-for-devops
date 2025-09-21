@@ -3,23 +3,23 @@
 # 注释行以 # 开头
 
 # Web应用服务
-my-app:8080:my-app
-api-server:3000:api
-web-dashboard:8081:dashboard
+10.0.0.6:9200:elasticsearch
+10.0.0.6:3000:api
+10.0.0.6:8081:dashboard
 
 # 数据库管理工具
-phpmyadmin:8082:phpmyadmin
-adminer:8083:adminer
-redis-commander:8084:redis
+10.0.0.6:8082:phpmyadmin
+10.0.0.6:8083:adminer
+10.0.0.6:8084:redis
 
 # 监控服务
-prometheus:9090:prometheus
-grafana:3001:grafana
-jaeger:16686:jaeger
+10.0.0.6:9090:prometheus
+10.0.0.6:3001:grafana
+10.0.0.6:16686:jaeger
 
 # 开发工具
-code-server:8085:code
-jupyter:8888:jupyter
+10.0.0.6:8085:code
+10.0.0.6:8888:jupyter
 
 # 示例访问地址:
 # https://localhost/my-app     -> http://localhost:8080
