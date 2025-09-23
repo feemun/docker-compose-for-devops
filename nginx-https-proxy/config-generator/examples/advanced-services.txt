@@ -1,0 +1,51 @@
+# 高级服务配置示例
+# 格式：服务名:端口:别名
+# 支持 IP 地址、域名和端口组合
+
+# Web 应用服务
+react-app:3000:webapp
+vue-dashboard:8080:dashboard
+angular-admin:4200:admin
+
+# API 服务
+node-api:3001:api
+python-api:8000:python-api
+go-service:8080:go-api
+java-service:8080:java-api
+
+# 数据库管理工具
+phpmyadmin:8080:phpmyadmin
+adminer:8080:adminer
+redis-commander:8081:redis-ui
+mongo-express:8081:mongo-ui
+
+# 监控和日志
+prometheus:9090:prometheus
+grafana:3000:grafana
+jaeger:16686:jaeger
+zipkin:9411:zipkin
+elasticsearch:9200:elasticsearch
+kibana:5601:kibana
+
+# 开发工具
+jupyter:8888:jupyter
+code-server:8080:code
+gitlab:8080:gitlab
+jenkins:8080:jenkins
+
+# 消息队列
+rabbitmq:15672:rabbitmq
+kafka-ui:8080:kafka-ui
+
+# 缓存服务
+redis-insight:8001:redis-insight
+memcached-admin:8080:memcached-ui
+
+# 文件服务
+minio:9001:minio
+nextcloud:8080:nextcloud
+
+# 外部服务（IP地址示例）
+192.168.1.100:8080:external-api
+10.0.0.50:3000:internal-app
+172.16.0.10:9000:legacy-system

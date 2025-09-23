@@ -27,10 +27,11 @@ show_help() {
     echo "  api-service:8080"
 }
 
-# 验证服务名称
+# 验证服务名称 - 支持IP地址和域名
 validate_service_name() {
     local service_name="$1"
-    if [[ ! "$service_name" =~ ^[a-zA-Z0-9_-]+$ ]]; then
+    # 允许字母、数字、点号、下划线、连字符（支持IP地址和域名）
+    if [[ ! "$service_name" =~ ^[a-zA-Z0-9._-]+$ ]]; then
         return 1
     fi
     return 0
@@ -111,12 +112,13 @@ create_single_service() {
     local output_dir="../../nginx-config/sites-enabled"
     mkdir -p "$output_dir"
     
-    # 输出文件
-    local output_file="$output_dir/${service_name}.conf"
+    # 输出文件 - 使用服务别名作为文件名
+    local output_file="$output_dir/${service_alias}.conf"
     
     # 读取模板并替换占位符
     sed -e "s/{{SERVICE_ALIAS}}/$service_alias/g" \
         -e "s/{{SERVICE_PORT}}/$service_port/g" \
+        -e "s/{{SERVICE_HOST}}/$service_name/g" \
         "$template_file" > "$output_file"
     
     return $?
@@ -208,10 +210,10 @@ while IFS= read -r line || [ -n "$line" ]; do
     # 直接创建服务配置
     if create_single_service "$SERVICE_NAME" "$SERVICE_PORT" "$SERVICE_ALIAS"; then
         SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
-        echo "✅ 服务 $SERVICE_NAME 配置创建成功"
+        echo "✅ 服务 $SERVICE_NAME 配置创建成功 (文件: ${SERVICE_ALIAS}.conf)"
     else
         FAIL_COUNT=$((FAIL_COUNT + 1))
-        echo "❌ 服务 $SERVICE_NAME 配置创建失败"
+        echo "❌ 服务 $SERVICE_NAME 配置创建失败 (文件: ${SERVICE_ALIAS}.conf)"
     fi
     
     echo ""
