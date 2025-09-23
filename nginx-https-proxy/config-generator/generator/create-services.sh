@@ -49,7 +49,7 @@ validate_port() {
 # 解析配置行
 parse_config_line() {
     local line="$1"
-    local -n result_array="$2"
+    local prefix="$2"
     
     # 跳过空行和注释行
     if [[ -z "$line" ]] || [[ "$line" =~ ^[[:space:]]*# ]]; then
@@ -63,9 +63,10 @@ parse_config_line() {
         return 2
     fi
     
-    result_array[0]="${CONFIG[0]}"
-    result_array[1]="${CONFIG[1]}"
-    result_array[2]="${CONFIG[2]:-${CONFIG[0]}}"
+    # 使用eval设置变量，避免local -n兼容性问题
+    eval "${prefix}0=\"${CONFIG[0]}\""
+    eval "${prefix}1=\"${CONFIG[1]}\""
+    eval "${prefix}2=\"${CONFIG[2]:-${CONFIG[0]}}\""
     
     return 0
 }
@@ -166,10 +167,8 @@ TOTAL_COUNT=0
 
 # 读取配置文件并处理每一行
 while IFS= read -r line || [ -n "$line" ]; do
-    declare -a config_parts
-    
     # 解析配置行
-    if parse_config_line "$line" config_parts; then
+    if parse_config_line "$line" "config_part_"; then
         parse_result=0
     else
         parse_result=$?
@@ -188,9 +187,9 @@ while IFS= read -r line || [ -n "$line" ]; do
             ;;
     esac
     
-    SERVICE_NAME="${config_parts[0]}"
-    SERVICE_PORT="${config_parts[1]}"
-    SERVICE_ALIAS="${config_parts[2]}"
+    SERVICE_NAME="$config_part_0"
+    SERVICE_PORT="$config_part_1"
+    SERVICE_ALIAS="$config_part_2"
     
     # 验证服务名称和端口
     if ! validate_service_name "$SERVICE_NAME"; then
