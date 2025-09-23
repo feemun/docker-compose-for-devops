@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTTPS连接测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .test-item { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        #results { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>HTTPS连接测试工具</h1>
+    <p>这个页面将帮助诊断浏览器访问HTTPS服务的问题。</p>
+    
+    <div class="test-item">
+        <h3>测试1: 基本HTTPS连接</h3>
+        <button onclick="testHttps('https://10.0.0.6/')">测试 https://10.0.0.6/</button>
+        <button onclick="testHttps('https://10.0.0.6:8443/')">测试 https://10.0.0.6:8443/</button>
+    </div>
+    
+    <div class="test-item">
+        <h3>测试2: 服务端点</h3>
+        <button onclick="testHttps('https://10.0.0.6/elasticsearch')">测试 Elasticsearch</button>
+        <button onclick="testHttps('https://10.0.0.6/grafana')">测试 Grafana</button>
+        <button onclick="testHttps('https://10.0.0.6/prometheus')">测试 Prometheus</button>
+    </div>
+    
+    <div class="test-item">
+        <h3>测试3: 使用localhost</h3>
+        <button onclick="testHttps('https://localhost/')">测试 https://localhost/</button>
+        <button onclick="testHttps('https://127.0.0.1/')">测试 https://127.0.0.1/</button>
+    </div>
+    
+    <div id="results"></div>
+    
+    <script>
+        function testHttps(url) {
+            const resultsDiv = document.getElementById('results');
+            const testResult = document.createElement('div');
+            testResult.className = 'test-item';
+            
+            testResult.innerHTML = `<h4>测试: ${url}</h4><p>正在测试...</p>`;
+            resultsDiv.appendChild(testResult);
+            
+            fetch(url, {
+                method: 'GET',
+                mode: 'cors'
+            })
+            .then(response => {
+                testResult.className = 'test-item success';
+                testResult.innerHTML = `
+                    <h4>✅ 成功: ${url}</h4>
+                    <p>状态码: ${response.status}</p>
+                    <p>状态文本: ${response.statusText}</p>
+                    <p>响应头: ${JSON.stringify(Object.fromEntries(response.headers))}</p>
+                `;
+            })
+            .catch(error => {
+                testResult.className = 'test-item error';
+                testResult.innerHTML = `
+                    <h4>❌ 失败: ${url}</h4>
+                    <p>错误信息: ${error.message}</p>
+                    <p>错误类型: ${error.name}</p>
+                    <p>这可能是由于:</p>
+                    <ul>
+                        <li>SSL证书问题</li>
+                        <li>CORS策略限制</li>
+                        <li>网络连接问题</li>
+                        <li>服务器配置问题</li>
+                    </ul>
+                `;
+            });
+        }
+        
+        // 页面加载时显示浏览器信息
+        window.onload = function() {
+            const browserInfo = document.createElement('div');
+            browserInfo.className = 'test-item';
+            browserInfo.innerHTML = `
+                <h3>浏览器信息</h3>
+                <p>用户代理: ${navigator.userAgent}</p>
+                <p>当前URL: ${window.location.href}</p>
+                <p>协议: ${window.location.protocol}</p>
+            `;
+            document.body.insertBefore(browserInfo, document.getElementById('results'));
+        };
+    </script>
+</body>
+</html>

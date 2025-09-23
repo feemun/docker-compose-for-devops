@@ -5,15 +5,8 @@
 # Web应用服务
 10.0.0.6:9200:elasticsearch
 
-# 数据库管理工具
-10.0.0.6:8084:redis-insight
-
 # 监控服务
-10.0.0.6:9090:prometheus
-10.0.0.6:3001:grafana
-
-# 开发工具
-10.0.0.6:8888:jupyter
+10.0.0.6:18080:nacos
 
 # 示例访问地址:
 # https://localhost/my-app     -> http://localhost:8080
