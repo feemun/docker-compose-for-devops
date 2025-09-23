@@ -11,9 +11,9 @@ services:
       # HTTPS端口
       - '443:443'
     volumes:
-      # 自定义SSL证书目录
-      - ./ssl:/etc/ssl/certs:ro
-      - ./ssl:/etc/ssl/private:ro
+      # 自定义SSL证书文件
+      - ./ssl/server.crt:/etc/ssl/certs/server.crt:ro
+      - ./ssl/server.key:/etc/ssl/private/server.key:ro
       # 自定义Nginx配置
       - ./nginx-config/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx-config/sites-enabled:/etc/nginx/sites-enabled:ro
